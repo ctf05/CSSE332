@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 // STEP 1:
 // After our in-class discussion, write code here that will create two
@@ -17,7 +18,7 @@
 // hello message:
 //    sleep(1);
 //
-// Now compile and run the program, what do you see?
+// Now compile and run the program, what do you notice?
 
 // STEP 3:
 // Fix the problem in step 2 by adding the appropriate function call in the
@@ -26,8 +27,24 @@
 int
 main(int argc, char **argv)
 {
-  // TODO: Add your code here to follow the steps above.
+  int rc;
+  int status = -1;
 
+  rc = fork();
+  if(rc < 0) {
+    perror("Failed to fork a process.");
+    exit(EXIT_FAILURE);
+  }
+
+  if(rc == 0) {
+    // child process
+    sleep(1); // step 2
+    printf("Hello from child process with pid = %d\n", getpid()); // step 1
+  } else {
+    // parent process
+    printf("Hello from parent process with pid = %d\n", getpid()); // step 1
+    wait(&status);
+  }
 
   exit(EXIT_SUCCESS);
 }
