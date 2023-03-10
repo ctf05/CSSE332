@@ -1,0 +1,231 @@
+diff --git a/gradelib.py b/gradelib.py
+old mode 100644
+new mode 100755
+diff --git a/user/arraylist.c b/user/arraylist.c
+index f78468a..3f92dd6 100644
+--- a/user/arraylist.c
++++ b/user/arraylist.c
+@@ -51,8 +51,11 @@ struct arraylist {
+  */
+ struct arraylist *al_new(void)
+ {
+-  /* TODO: Add your code here. */
+-  return 0;
++  struct arraylist *al = malloc(sizeof(struct arraylist));
++  al->size = 0;
++  al->capacity = DEF_ARRAY_LIST_CAPACITY;
++  al->list = malloc(sizeof(int) * al->capacity);
++  return al;
+ }
+ 
+ /**
+@@ -65,7 +68,8 @@ struct arraylist *al_new(void)
+  */
+ void al_free(struct arraylist *al)
+ {
+-  /* TODO: Add your code here. */
++  free(al->list);
++  free(al);
+ }
+ 
+ /**
+@@ -80,8 +84,10 @@ void al_free(struct arraylist *al)
+  */
+ int al_get_at(struct arraylist *al, int pos)
+ {
+-  /* TODO: Add your code here. */
+-  return 0;
++  if (pos < 0 || pos >= al->size) {
++    return 0xffffffff;
++  }
++  return al->list[pos];
+ }
+ 
+ /**
+@@ -98,7 +104,15 @@ int al_get_at(struct arraylist *al, int pos)
+  */
+ void al_resize(struct arraylist *al)
+ {
+-  /* TODO: Add your code here. */
++  int *oldList = malloc(sizeof(int) * al->capacity);
++  for (int i = 0; i < al->capacity; i++) {
++    oldList[i] = al->list[i];
++  }
++  al->capacity *= 2;
++  al->list = malloc(sizeof(int) * al->capacity);
++  for (int i = 0; i < (al->capacity)/2; i++) {
++    al->list[i] = oldList[i];
++  }
+ }
+ 
+ /**
+@@ -116,7 +130,11 @@ void al_resize(struct arraylist *al)
+  */
+ void al_append(struct arraylist *al, int val)
+ {
+-  /* TODO: Add your code here. */
++  if (al->size == al->capacity) {
++    al_resize(al);
++  }
++  al->list[al->size] = val;
++  al->size++;
+ }
+ 
+ /**
+diff --git a/user/find.c b/user/find.c
+index 8f3fe28..4d3a1db 100644
+--- a/user/find.c
++++ b/user/find.c
+@@ -3,8 +3,68 @@
+ #include "kernel/fs.h"
+ #include "kernel/stat.h"
+ 
++void find(char *path, char *name, char *currentName)
++{
++  char buf[512];
++  //char *p;
++  int fd;
++  struct stat st;
++  struct dirent de;
++
++  if ((fd = open(path, 0)) < 0) {
++    printf("open problem\n");
++    exit(1);
++  }
++  if(fstat(fd, &st) < 0) {
++    printf("stat problem\n");
++    close(fd);
++    return;
++  }
++    if (st.type == T_DIR) {
++      while (read(fd, &de, sizeof(de)) == sizeof(de)) {
++        if (de.inum == 0) {
++          continue;
++        }
++        if (strcmp(de.name, ".") == 0 || strcmp(de.name, "..") == 0) {
++          continue;
++        }
++        if (strlen(path) + 1 + strlen(de.name) + 1 > 512) {
++          printf("path too long");
++          exit(1);
++        }
++        strcpy(buf, path);
++        strcpy(buf + strlen(buf), "/");
++        strcpy(buf + strlen(buf), de.name);
++        
++        // strcpy(buf, path);
++        // p = buf + strlen(buf);
++        // *p++ = '/';
++        // //strcpy(p, buf);
++        // //strcpy(p + strlen(p), de.name);
++        // printf("p: %s", p);
++        // printf("buf: %s", buf);
++        find(buf, name, de.name);
++      }
++        
++  }
++  else if (st.type == T_FILE) {
++
++    if (strcmp(currentName, name) == 0) {
++      printf("%s\n", path);
++    }
++}
++  close(fd);
++}
++  
++
+ int main(int argc, char **argv)
+ {
+-  /* TODO: Insert your code here. */
++  if (argc != 3) {
++    printf("Provide 2 arguments");
++    exit(1);
++  }
++  find(argv[1], argv[2], argv[2]);
+   exit(0);
+ }
++
++
+diff --git a/user/sleep.c b/user/sleep.c
+index 14aab29..e332af7 100644
+--- a/user/sleep.c
++++ b/user/sleep.c
+@@ -3,7 +3,15 @@
+ 
+ int main(int argc, char **argv)
+ {
+-  /* TODO: Insert your code here. */
+-
++  if (argc == 1) {
++    fprintf(2, "Provide an argument");
++    exit(1);
++  }
++  int n = atoi(argv[1]);
++  if (n < 0) {
++    fprintf(2, "Provide a positive argument");
++    exit(1);
++  }
++  sleep(n);
+   exit(0);
+ }
+diff --git a/user/warmup.c b/user/warmup.c
+index d4d12c0..ddef2d0 100644
+--- a/user/warmup.c
++++ b/user/warmup.c
+@@ -31,8 +31,8 @@
+  */
+ int add_with_pointers(int *val1, int *val2)
+ {
+-  /* TODO: ADD YOUR CODE HERE */
+-  return 0;
++  int sum = *val1 + *val2;
++  return sum;
+ }
+ 
+ void test_add_with_pointers(void)
+@@ -52,7 +52,11 @@ void test_add_with_pointers(void)
+  */
+ void ensure_correct_order(int *should_be_smaller, int *should_be_larger)
+ {
+-  /* TODO: ADD YOUR CODE HERE */
++  if (*should_be_smaller > *should_be_larger) {
++    int temp = *should_be_smaller;
++    *should_be_smaller = *should_be_larger;
++    *should_be_larger = temp;
++  }
+ }
+ 
+ void test_ensure_correct_order(void)
+@@ -81,7 +85,11 @@ void test_ensure_correct_order(void)
+  */
+ int special_equals(int *val1, int *val2)
+ {
+-  /* TODO: ADD YOUR CODE HERE */
++  if (val1 == val2) {
++    return 2;
++  } else if (*val1 == *val2) {
++    return 1;
++  }
+   return 0;
+ }
+ 
+@@ -120,7 +128,18 @@ void test_special_equals(void)
+  */
+ void string_with_q(char *s1, char *s2, char **output)
+ {
+-  /* TODO: ADD YOUR CODE HERE */
++  int i = 0;
++  while (s1[i] != '\0') {
++    if (s1[i] == 'Q') {
++      *output = s1;
++      return;
++    } else if (s2[i] == 'Q') {
++      *output = s2;
++      return;
++    }
++    i++;
++  }
++  *output = 0;
+ }
+ 
+ void test_string_with_q(void)
