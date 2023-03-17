@@ -35,6 +35,17 @@ void parent(int rc)
   // printf("Parent %d: My child %d has failed the exam\n", getpid(), rc);
 
   // printf("Parent %d: My child %d has exited with error\n", getpid(), rc);
+  int status
+  wait(&status);
+  if (WIFEXITED(status)) {
+    if (WEXITSTATUS(status) == 0) {
+      printf("Parent %d: My child %d has passed the exam\n", getpid(), rc);
+    } else if (WEXITSTATUS(status) == 99) {
+      printf("Parent %d: My child %d has failed the exam\n", getpid(), rc);
+    } else {
+      printf("Parent %d: My child %d has exited with error\n", getpid(), rc);
+    }
+  }
 }
 
 int
